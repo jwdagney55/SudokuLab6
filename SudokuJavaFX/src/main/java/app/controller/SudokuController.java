@@ -62,7 +62,8 @@ public class SudokuController implements Initializable {
 
 	private int iCellSize = 45;
 	private static final DataFormat myFormat = new DataFormat("com.cisc181.Data.Cell");
-
+	private static final DataFormat myTrashCan = new DataFormat("com.cisc181.Data.TrashCan");
+	
 	private eGameDifficulty eGD = null;
 	private Sudoku s = null;
 
@@ -86,6 +87,11 @@ public class SudokuController implements Initializable {
 	private void btnStartGame(ActionEvent event) {
 		CreateSudokuInstance();
 		BuildGrids();
+	}
+	
+	@FXML
+	private void btnEndGame(ActionEvent event) {
+		EndGame();
 	}
 
 	/**
@@ -210,9 +216,53 @@ public class SudokuController implements Initializable {
 			// Add the pane to the grid
 			gridPaneNumbers.add(paneSource, iCol, 0);
 		}
+		StackPane spTrash = new StackPane();
+		ImageView ivTC = new ImageView(this.GetTrashCanImage());
+		ivTC.setFitHeight(50);
+		ivTC.setFitWidth(50);
+		spTrash.getChildren().add(ivTC);
+		
+		spTrash.setOnDragOver(new EventHandler<DragEvent>() {
+			public void handle(DragEvent event) {
+				if (event.getGestureSource() != spTrash && event.getDragboard().hasContent(myFormat)) {
+					// Don't let the user drag over items that already have a cell value set
+
+					Dragboard db = event.getDragboard();
+					Cell CellFrom  = (Cell) db.getContent(myFormat);
+					if (CellFrom.getDropped()) {
+						event.acceptTransferModes(TransferMode.MOVE);
+					}
+				}
+				event.consume();
+			}
+		});
+
+		
+		spTrash.setOnDragDropped(new EventHandler<DragEvent>() {
+			public void handle(DragEvent event) {
+				Dragboard db = event.getDragboard();
+				boolean success = false;
+				if(db.hasContent(myFormat)) {
+					Cell cell = (Cell) db.getContent(myFormat);
+					game.getSudoku().getPuzzle()[cell.getiRow()][cell.getiCol()]=0;
+					cell.setiCellValue(0);
+					game.getSudoku().PrintPuzzle();
+					success = true;
+					event.setDropCompleted(success);
+					event.consume();
+					db.clear();
+					BuildGrids();
+					
+				}
+			}
+			
+		});
+
+		gridPaneNumbers.add(spTrash, s.getiSize() + 1, 0);
 		return gridPaneNumbers;
 	}
 
+	
 	/**
 	 * BuildSudokuGrid - This is the main Sudoku grid.  It cheats and uses SudokuStyler class to figure out the border
 	 *	widths.  There are also methods implemented for drag/drop.
@@ -315,6 +365,7 @@ public class SudokuController implements Initializable {
 						Dragboard db = event.getDragboard();
 						boolean success = false;
 						Cell CellTo = (Cell) paneTarget.getCell();
+						CellTo.setDropped(true);
 
 						//TODO: This is where you'll find mistakes.  
 						//		Keep track of mistakes... as an attribute of Sudoku... start the attribute
@@ -333,6 +384,7 @@ public class SudokuController implements Initializable {
 								
 								//TODO: Set the message for mistakes
 								if (game.getShowHints()) {
+									return;
 
 								}
 							}
@@ -345,9 +397,26 @@ public class SudokuController implements Initializable {
 							paneTarget.getChildren().add(iv);
 							System.out.println(CellFrom.getiCellValue());
 							success = true;
+							
 						}
 						event.setDropCompleted(success);
 						event.consume();
+						db.clear();
+					}
+				});
+				paneTarget.setOnDragDetected(new EventHandler<MouseEvent>(){
+					public void handle(MouseEvent event) {
+						Cell c = paneTarget.getCell();
+						if (c.getDropped()) {
+							Dragboard db = paneTarget.startDragAndDrop(TransferMode.ANY);
+							ClipboardContent content = new ClipboardContent();
+							content.put(myFormat,c);
+							db.setContent(content);
+							event.consume();
+							
+							
+						}
+						
 					}
 				});
 
@@ -370,12 +439,17 @@ public class SudokuController implements Initializable {
 	
 	private void EndGame()
 	{
-		//	Disable the hboxNumbers items so they can't be dragged
-		//	Show message that the game is over
-		//	Allow them to 'clear' cells / reset mistakes
+		hboxNumbers.setDisable(true);//	Disable the hboxNumbers items so they can't be dragged
+		System.out.println("Game Over");
+		
 	}
 	private Image GetImage(int iValue) {
 		InputStream is = getClass().getClassLoader().getResourceAsStream("img/" + iValue + ".png");
+		return new Image(is);
+	}
+	
+	private Image GetTrashCanImage() {
+		InputStream is = getClass().getClassLoader().getResourceAsStream("img/trashCan.png");
 		return new Image(is);
 	}
 }

@@ -16,7 +16,8 @@ public class SudokuPrivateMethodsTest {
 			System.out.print("*");
 		System.out.println();
 	}
-
+	
+	/*
 	@Test
 	public void Sudoku_Test_SetRegion() {
 
@@ -124,4 +125,5 @@ public class SudokuPrivateMethodsTest {
 		}
 
 	}
+	*/
 }

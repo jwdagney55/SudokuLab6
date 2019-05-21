@@ -7,6 +7,7 @@ public class Cell implements Serializable {
 	private int iRow;
 	private int iCol;
 	private int iCellValue;
+	private boolean dropped = false;
 
 	public Cell(int iRow, int iCol) {
 		super();
@@ -35,4 +36,11 @@ public class Cell implements Serializable {
 		return Objects.hash(iRow, iCol);
 	}
 
+	public void setDropped(boolean drop) {
+		this.dropped = drop;
+	}
+	
+	public boolean getDropped() {
+		return this.dropped;
+	}
 }
